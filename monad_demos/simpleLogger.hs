@@ -13,7 +13,12 @@ execLoggers x f1 f2 = logC
           (Log ys val2) = f2 val1
           logC = Log (xs ++ ys) val2 
           
-          
+
+bindLog :: Log a -> (a -> Log b) -> Log b
+bindLog (Log xs val) f = result
+    where (Log ys val2) = f val
+          result = Log (xs ++ ys) val2
+        
 -- Usage:
     -- GHCi> let add1Log = toLogger (+1) "added one"
     -- GHCi> add1Log 3
