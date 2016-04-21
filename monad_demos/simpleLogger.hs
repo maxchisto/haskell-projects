@@ -39,7 +39,12 @@ mult2Log = toLogger (* 2) "multiplied by 2"
 -- Usage:
     -- GHCi> add1Log 3
     -- Log ["added one"] 4
+    
     -- GHCi> mult2Log 3
     -- Log ["multiplied by 2"] 6
+    
     -- GHCi> execLoggers 3 add1Log mult2Log
     -- Log ["added one","multiplied by 2"] 8
+    
+    -- GHCi> execLoggersList 3 [add1Log, mult2Log, \x -> Log ["multiplied by 100"] (x * 100)]
+    -- Log ["added one","multiplied by 2","multiplied by 100"] 800
