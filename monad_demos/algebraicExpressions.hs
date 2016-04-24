@@ -10,9 +10,9 @@ tokenize :: String -> Maybe [Token]
 tokenize s = foldr foldFunc (Just []) $ map asToken $ words s
 
 foldFunc :: Maybe Token -> Maybe [Token] -> Maybe [Token]
-foldFunc Nothing _ = Nothing
-foldFunc _ Nothing = Nothing
-foldFunc (Just x) (Just xs) = Just (x:xs)
+foldFunc token tokens = do x <- token
+                           y <- tokens
+                           return (x:y) 
 
 
 asToken :: String -> Maybe Token
