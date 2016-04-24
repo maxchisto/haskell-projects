@@ -10,10 +10,14 @@ tokenize :: String -> Maybe [Token]
 tokenize s = foldr foldFunc (Just []) $ map asToken $ words s
 
 foldFunc :: Maybe Token -> Maybe [Token] -> Maybe [Token]
-foldFunc token tokens = do x <- token
-                           y <- tokens
-                           return (x:y) 
-
+foldFunc maybeToken maybeTokens = do x <- maybeToken
+                                     y <- maybeTokens
+                                     return (x:y) 
+                                     -- token >>= (\x -> 
+                                     --   tokens >>= (\y -> 
+                                     --     return (x:y)    
+                                     --   )
+                                     -- )
 
 asToken :: String -> Maybe Token
 asToken x | isNumber x      = Just (Number (read x :: Int))
