@@ -7,7 +7,9 @@ data Token = Number Int | Plus | Minus | LeftBrace | RightBrace
     deriving (Eq, Show)
 
 tokenize :: String -> Maybe [Token]
-tokenize s = foldr foldFunc (Just []) $ map asToken $ words s
+tokenize s = foldr foldFunc (Just []) tokens
+    where expWords = words s
+          tokens = map asToken expWords
 
 foldFunc :: Maybe Token -> Maybe [Token] -> Maybe [Token]
 foldFunc maybeToken maybeTokens = do x <- maybeToken
