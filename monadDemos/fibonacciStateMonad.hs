@@ -1,4 +1,4 @@
-
+-- Fibonacci calculator based on the State monad
 
 import Control.Monad.State
 
