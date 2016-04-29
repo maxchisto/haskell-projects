@@ -1,4 +1,4 @@
--- Asks for your name untill you enter it
+-- Asks for your name until you enter it
 -- Then greets you.
 
 getName :: IO String
