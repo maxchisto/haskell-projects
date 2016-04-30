@@ -1,3 +1,6 @@
+-- Converts a simple algebraic expression into an array of expression tokens
+
+
 import Data.Char as DC hiding (isNumber)
 
 data Token = Number Int | Plus | Minus | LeftBrace | RightBrace 
