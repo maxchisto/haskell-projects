@@ -3,6 +3,15 @@ import Data.Char as DC hiding (isNumber)
 data Token = Number Int | Plus | Minus | LeftBrace | RightBrace 
     deriving (Eq, Show)
 
+tokenize :: String -> Maybe [Token]
+tokenize s = foldr foldFunc (Just []) $ map asToken $ words s
+
+foldFunc :: Maybe Token -> Maybe [Token] -> Maybe [Token]
+foldFunc Nothing _ = Nothing
+foldFunc _ Nothing = Nothing
+foldFunc (Just x) (Just xs) = Just (x:xs)
+
+
 asToken :: String -> Maybe Token
 asToken x | isNumber x      = Just (Number (read x :: Int))
           | isPlus x        = Just Plus
