@@ -1,3 +1,5 @@
+-- https://www.hackerrank.com/challenges/dice-path
+
 -- Problem Statement
 -- You are given an MxN grid and a 6 sided dice starting at the point (1, 1). 
 -- You can only move dice toward right or down by rotating it in the respective direction. 
@@ -72,7 +74,7 @@ diceStep subSolution (x,y) = insert (x,y) (newState, newSum) subSolution
                     else newSumFromTop
 
 
-Here we apply our step function to every step                     
+-- Here we apply our step function to every step                   
 calculateSum :: Int -> Int -> Int
 calculateSum m n = maxSum 
     where solutionMap = Prelude.foldl diceStep empty (problemTable m n)
