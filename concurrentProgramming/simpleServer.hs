@@ -1,11 +1,13 @@
+-- This server listens for connections on `port` and replies with the payload reversed.
+-- Usage: compile and start; 
+--        from a separate terminal: ghc -e 'mapM_ print [1..]' | nc localhost 44444
+
 import Control.Concurrent
 import Control.Concurrent.Async
 import Control.Monad
 import Network
 import System.IO
 import Text.Printf
-
-fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
 
 port :: Int
 port = 44444
