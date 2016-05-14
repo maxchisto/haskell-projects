@@ -15,12 +15,14 @@
 -- Output
 -- For each test case, print the sum of maximal path to (M, N). 
 
+{-# LANGUAGE FlexibleInstances #-}
 
 import Data.Map.Strict as Map
 import Data.Maybe
 
 
 type DiceState = (Int, Int, Int)
+type DicePath = (DiceState, Sum)
 
 type Coords = (Int, Int)
 type Solution = Map Coords (DiceState, Sum) 
@@ -40,38 +42,50 @@ diceValue :: DiceState -> Int
 diceValue (top, front, right) = top
 
 -- Simulates rolling the dice one step down the board
-rollDown :: DiceState -> DiceState
-rollDown (-1,-1,-1) = (-1,-1,-1)
-rollDown (top, front, right) = (7 - front, top, right)
+rollDown :: DicePath -> DicePath
+rollDown ((-1,-1,-1),_) = ((-1,-1,-1),0)
+rollDown ((top, front, right),x) = ((7 - front, top, right),7-front+x)
 
 -- Simulates rolling the dice one step to the right
-rollRight :: DiceState -> DiceState
-rollRight (-1,-1,-1) = (-1,-1,-1)
-rollRight (top, front, right) = (7 - right, front, top)
+rollRight :: DicePath -> DicePath
+rollRight ((-1,-1,-1),_) = ((-1,-1,-1),0)
+rollRight ((top, front, right),x) = ((7 - right, front, top),7-right+x)
+
+
+rollRightRight  = (rollRight . rollRight)
+rollDownDown    = (rollDown . rollDown)
+rollDownRight   = (rollRight . rollDown)
+rollRightDown   = (rollDown . rollRight)
+
+
+-- instance Ord DicePath where
+--     (_,x) > (_,y) = x > y
+--     (_,x) <= (_,y) = x <= y
+    
+
 
 -- The basis for dynamic programming algorithm.
 -- Calculates the solution for the current step based on solutions for the previous steps
 diceStep :: Solution -> Problem -> Solution
-diceStep subSolution (1,1) = insert (1,1) (initialDiceState, 1) subSolution          
+diceStep subSolution (1,1) = insert (1,1) (initialDiceState, 1) subSolution
+diceStep subSolution (2,1) = insert (2,1) ((5,1,4),6) subSolution
+diceStep subSolution (1,2) = insert (1,2) ((3,2,1),4) subSolution
 diceStep subSolution (x,y) = insert (x,y) (newState, newSum) subSolution
-    where  maybeLeft = (Map.lookup (x,y-1) subSolution)
-           maybeTop  = (Map.lookup (x-1,y) subSolution)
+    where  maybeLeft = (Map.lookup (x-2,y) subSolution)
+           maybeTop  = (Map.lookup (x,y-2) subSolution)
+           maybeDiagonal = (Map.lookup (x-1,y-1) subSolution)
           
-           (stateFromLeft, sumFromLeft) = fromMaybe ((-1,-1,-1),-1) maybeLeft
-           (stateFromTop, sumFromTop)   = fromMaybe ((-1,-1,-1),-1) maybeTop
+           leftState = fromMaybe ((-1,-1,-1),0) maybeLeft
+           topState = fromMaybe ((-1,-1,-1),0) maybeTop
+           diagonalState = fromMaybe ((-1,-1,-1),0) maybeDiagonal
            
-           newStateFromLeft = rollRight stateFromLeft
-           newStateFromTop  = rollDown stateFromTop
-           newSumFromLeft = sumFromLeft + (diceValue newStateFromLeft)
-           newSumFromTop  = sumFromTop + (diceValue newStateFromTop) 
+           stateA = rollRightRight leftState
+           stateB = rollDownDown topState
+           stateC = rollDownRight diagonalState
+           stateD = rollRightDown diagonalState
            
-           newState = if newSumFromLeft > newSumFromTop
-                      then newStateFromLeft
-                      else newStateFromTop
-                      
-           newSum = if newSumFromLeft > newSumFromTop
-                    then newSumFromLeft
-                    else newSumFromTop
+           (newState, newSum) = maximum [stateA, stateB, stateC, stateD]
+            
 
 
 -- Here we apply our step function to every step                   
