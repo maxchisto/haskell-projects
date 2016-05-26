@@ -18,10 +18,16 @@ import qualified Data.Vector as V
 -- Exercise 1 -----------------------------------------
 
 liftM :: Monad m => (a -> b) -> m a -> m b
-liftM = undefined
+liftM f m = do
+  value <- m
+  return $ f value
 
 swapV :: Int -> Int -> Vector a -> Maybe (Vector a)
-swapV = undefined
+swapV index1 index2 v = do
+  item1 <- (v !? index1)
+  item2 <- (v !? index2)
+  return $ v // [(index1,item2),(index2,item1)]
+
 
 -- Exercise 2 -----------------------------------------
 
