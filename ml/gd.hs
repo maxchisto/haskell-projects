@@ -48,9 +48,11 @@ gradientStep xys alpha (m, b) = (newMCoeff, newBCoeff)
 
 results :: DataSet -> (MCoeff, BCoeff) -> IO (MCoeff, BCoeff)
 results dataSet (m, b) = do
-    putStrLn $ show (m, b)
-    let (newM, newB) = gradientStep dataSet 0.00001 (m, b)
-    if abs(newM - m) < 0.001
+    let currentTotalCost = totalCost (m, b) dataSet
+    putStrLn $ show (m, b) ++ "; error=" ++ show currentTotalCost
+    let (newM, newB) = gradientStep dataSet 0.0001 (m, b)
+    let newTotalCost = totalCost (newM, newB) dataSet
+    if abs(currentTotalCost - newTotalCost) < 0.0001
         then return (newM, newB)
         else results dataSet (newM, newB)
 
