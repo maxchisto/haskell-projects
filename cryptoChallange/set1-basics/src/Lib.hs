@@ -20,7 +20,10 @@ someFunc = do
     BS.putStrLn $ xorBS "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965"
     -- mapM_ BS.putStrLn allMsgs
     -- Prelude.putStrLn $ show $ rateText "W{{\DEL}zs4YW3g4x}\DELq4u4d{azp4{r4vuw{z"
-    mapM_ (Prelude.putStrLn . show) $ Prelude.filter (\(_,y) -> y > 0) (Prelude.map (\x -> (x,rateText x)) allMsgs)
+    printTextSuspects "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+    text <- BS.readFile "resources/4.txt"
+    let lines = C.split '\n' text
+    mapM_ printTextSuspects lines
     return ()
 
 
@@ -39,9 +42,19 @@ xorBS x y = BS.pack $ BS.zipWith xor (hex2bin x) (hex2bin y)
 decipher :: ByteString -> Word8 -> ByteString
 decipher xs y = BS.map (xor y) (hex2bin xs)
 
-allMsgs :: [ByteString]
-allMsgs = Prelude.map (decipher "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736") codes
+allCombos :: ByteString -> [ByteString]
+allCombos hexString = Prelude.map (decipher hexString) codes
     where codes = Prelude.map toEnum [0..255]
+
+
+printTextSuspects :: ByteString -> IO ()
+printTextSuspects s = mapM_ (Prelude.putStrLn . show) $ detectText s
+
+detectText :: ByteString -> [(ByteString, Int)]
+detectText hexString = Prelude.filter isText (Prelude.map toRatedText $ allCombos hexString)
+    where isText = \(_,y) -> y > 10  -- find lines which are text suspects
+          toRatedText = \x -> (x,rateText x)
+
 
 rateText :: ByteString -> Int
 rateText = tripletScore . C.unpack . (C.map toLower) . removeSpaces
