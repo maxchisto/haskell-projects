@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( someFunc
+    ( someFunc,
+      xorBS
     ) where
 
 import Data.Bits (xor)
@@ -20,10 +21,14 @@ someFunc = do
     BS.putStrLn $ xorBS "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965"
     -- mapM_ BS.putStrLn allMsgs
     -- Prelude.putStrLn $ show $ rateText "W{{\DEL}zs4YW3g4x}\DELq4u4d{azp4{r4vuw{z"
-    printTextSuspects "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-    text <- BS.readFile "resources/4.txt"
-    let lines = C.split '\n' text
-    mapM_ printTextSuspects lines
+    -- printTextSuspects "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+    -- text <- BS.readFile "resources/4.txt"
+    -- let lines = C.split '\n' text
+    -- mapM_ printTextSuspects lines
+    let line = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+    let key = "ICE"
+    Prelude.putStrLn $ show $ B16.encode $ xorEncode line key
+    Prelude.putStrLn $ show $ xorDecode "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f" key
     return ()
 
 
@@ -87,3 +92,15 @@ score ('o','f','t') = 3
 score ('s','t','h') = 2
 score ('m','e','n') = 1
 score (l1,l2,l3) = 0
+
+
+repeatXor :: [Word8] -> [Word8] -> [Word8]
+repeatXor [] keys = []
+repeatXor (x:xs) (key:keys) = (x `xor` key) : (repeatXor xs (keys ++ [key]))
+
+-- Result comes out binary. Use B16.encode to show it
+xorEncode :: ByteString -> ByteString -> ByteString
+xorEncode text key = BS.pack $ repeatXor (BS.unpack text) (BS.unpack key)
+
+xorDecode :: ByteString -> ByteString -> ByteString
+xorDecode hex key = xorEncode (hex2bin hex) key
