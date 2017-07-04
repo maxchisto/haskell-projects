@@ -2,8 +2,11 @@
 
 module RepeatXor
     (
-      demo
+      breakCode,
+      chunkByKeysize,
+      transposeChunks
     ) where
+
 
 import Data.Bits (xor)
 import Data.ByteString as BS
@@ -12,26 +15,18 @@ import Data.ByteString.Base64 as B64
 import Data.ByteString.Base16 as B16
 import Data.List.Split (chunksOf)
 import Data.List as L
+import Data.String as S
 import Data.Word
 import Lib
 
-type Window = Int
+type Keysize = Int
 
-
-demo :: IO ()
-demo = do
-    Prelude.putStrLn "Demo!"
+breakCode :: IO ()
+breakCode = do
+    Prelude.putStrLn "Xor2!"
     payload <- getBinaryPayload "resources/6.txt"
-    mapM_ (\x -> Prelude.putStrLn $ show $ (x, normedDistance payload x)) [2..40]
-    -- Prelude.putStrLn $ show $ transposeBS $ processPayload payload
-    let payloadB16 = B16.encode payload
-    -- mapM_ (\x -> printDecoded x payloadB16) [20..40]
-    printDecoded 1 "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-    return ()
+    mapM_ (Prelude.putStrLn . show) (findHiddenText payload)
 
-printBin :: ByteString -> IO ()
-printBin bytes = do
-    Prelude.putStrLn $ show $ B16.encode $ bytes
     return ()
 
 getBinaryPayload :: FilePath -> IO ByteString
@@ -42,7 +37,7 @@ getBinaryPayload path = do
     return $ decodeLenient payloadB64
 
 
-normedDistance :: ByteString -> Window -> Float
+normedDistance :: ByteString -> Keysize -> Float
 normedDistance bString n = fromIntegral totalDistance / fromIntegral n
     where bytes = BS.unpack bString
           a = C.take n bString
@@ -51,24 +46,50 @@ normedDistance bString n = fromIntegral totalDistance / fromIntegral n
           d = C.take n (C.drop (3*n) bString)
           totalDistance = binHammingDistance a b + binHammingDistance b c + binHammingDistance a c + binHammingDistance a d + binHammingDistance b d
 
--- Split by key size and transpose
-preparePayload :: ByteString -> Int -> [ByteString]
-preparePayload xs n = L.map BS.pack (L.transpose chunks)
-    where chars = BS.unpack xs
-          chunks = chunksOf n chars
+-- Calculate score using normalized hamming distance
+bytesWithScore :: ByteString -> Keysize -> (Keysize, Float)
+bytesWithScore bs k = (k, score)
+    where score = normedDistance bs k
 
-decipher :: ByteString -> ByteString
-decipher = fst . L.head . textSuspects
+sortingFunc :: (Keysize, Float) -> (Keysize, Float) -> Ordering
+sortingFunc x y | (snd x) > (snd y) = GT
+                        | otherwise = LT
 
-processPayload :: Int -> ByteString -> [ByteString]
-processPayload window payload = L.map BS.pack (L.transpose unpackedCols)
-    where bsList = preparePayload payload window
-          decipheredCols = L.map decipher bsList
-          unpackedCols = L.map BS.unpack decipheredCols
+-- Produces a list of keysizes based on scoring function
+likelyKeysizes :: ByteString -> [Keysize]
+likelyKeysizes bs = L.map fst sortedTuples
+    where tuples = [bytesWithScore bs x | x <- [2..40]]
+          sortedTuples = L.sortBy sortingFunc tuples
 
+-- Splits payload in chunks of the size of keysize
+chunkByKeysize :: ByteString -> Keysize -> [ByteString]
+chunkByKeysize bs k = L.map BS.pack chunks
+    where words = BS.unpack bs
+          chunks = chunksOf k words
 
-transposeBS :: [ByteString] -> [ByteString]
-transposeBS = (L.map BS.pack) . L.transpose . (L.map BS.unpack)
+transposeChunks :: [ByteString] -> [ByteString]
+transposeChunks = (L.map BS.pack) . L.transpose . (L.map BS.unpack)
 
-printDecoded :: Int -> ByteString -> IO ()
-printDecoded n bs = Prelude.putStrLn $ show $ BS.concat $ processPayload n bs
+decodeSingleXor :: ByteString -> ByteString
+decodeSingleXor bs = fst $ L.head (textSuspects bs)
+
+-- Takes transposed bytestring and returns possible combos
+combinationsOfChunks :: [ByteString] -> [ByteString]
+combinationsOfChunks chunks = L.map decodeSingleXor chunks
+
+textWithScore :: ByteString -> (ByteString, Float)
+textWithScore bs = (bs, rateText bs)
+
+decodeXor :: ByteString -> [(ByteString, Float)]
+decodeXor bs = do
+    keysize <- L.take 5 $ likelyKeysizes bs
+    let textChunks = transposeChunks $ combinationsOfChunks $ transposeChunks $ chunkByKeysize bs keysize
+    return $ textWithScore $ BS.concat textChunks
+
+sortRatedText :: [(ByteString, Float)] -> [(ByteString, Float)]
+sortRatedText = L.sortBy sortingFunc
+    where sortingFunc x y | (snd x) < (snd y) = GT
+                          | otherwise = LT
+
+findHiddenText :: ByteString -> [String]
+findHiddenText = S.lines . C.unpack . fst . L.head . sortRatedText . decodeXor

@@ -3,6 +3,7 @@
 module Lib
     ( someFunc,
       xorBS,
+      rateText,
       binHammingDistance,
       textSuspects
     ) where
@@ -50,7 +51,8 @@ xorBS :: ByteString -> ByteString -> ByteString
 xorBS x y = BS.pack $ BS.zipWith xor (hex2bin x) (hex2bin y)
 
 decipher :: ByteString -> Word8 -> ByteString
-decipher xs y = BS.map (xor y) (hex2bin xs)
+--decipher xs y = BS.map (xor y) (hex2bin xs)
+decipher xs y = BS.map (xor y) xs
 
 allCombos :: ByteString -> [ByteString]
 allCombos hexString = Prelude.map (decipher hexString) codes
